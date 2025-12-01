@@ -1,11 +1,12 @@
-import fornecedorRepository from '../repositories/fornecedor.repositories.js';
+import fornecedorRepository from "../repositories/fornecedor.repositories.js";
 
-async function createFornecedorService(newFornecedor){
-    const foundFornecedor = await fornecedorRepository.findByCnpjRepository(newFornecedor.cnpj);
-    if (foundFornecedor) {
-        throw new Error('CNPJ já cadastrado');
+async function createFornecedorService(novoFornecedor) {
+    const fornecedor = await fornecedorRepository.createFornecedorRepository(novoFornecedor);
+    
+    if (!fornecedor) {
+        throw new Error("Erro ao criar fornecedor");
     }
-    const fornecedor = await fornecedorRepository.createFornecedorRepository(newFornecedor);
+
     return fornecedor;
 }
 
@@ -14,14 +15,45 @@ async function findAllFornecedorService() {
     return fornecedor;
 }
 
-async function findByIdService(id) {
-    const fornecedor = await fornecedorRepository.findByIdRepository(id);
-    if (!fornecedor) throw new Error('Fornecedor não encontrado');
+async function findFornecedorByIdService(id) {
+    const fornecedor = await fornecedorRepository.findFornecedorByIdRepository(id);
+    
+    if (!fornecedor) {
+        throw new Error("fornecedor não encontrado");
+    }
+    
     return fornecedor;
+}
+
+async function updateFornecedorService(novoFornecedor, id) {
+    const fornecedor = await fornecedorRepository.findFornecedorByIdRepository(id);
+    
+    if (!fornecedor) {
+        throw new Error("fornecedor não encontrado");
+    }
+    
+    const fornecedorAtualizado = await fornecedorRepository.updateFornecedorRepository(id, novoFornecedor);
+
+    return fornecedorAtualizado;
+}
+
+async function deleteFornecedorService(id) {
+    const fornecedor = await fornecedorRepository.findFornecedorByIdRepository(id);
+
+    if (!fornecedor) {
+        throw new Error("fornecedor não encontrado");
+    }
+
+    const mensagemRetorno = await fornecedorRepository.deleteFornecedorRepository(id);
+
+    return mensagemRetorno;
+
 }
 
 export default {
     createFornecedorService,
     findAllFornecedorService,
-    findByIdService,
-};
+    findFornecedorByIdService,
+    updateFornecedorService,
+    deleteFornecedorService
+}

@@ -1,83 +1,127 @@
-import db from "../config/database.js";
+import db from '../config/database.js';
 
 db.run(`
-        CREATE TABLE IF NOT EXISTS fornecedor (
+    CREATE TABLE IF NOT EXISTS fornecedor (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        cnpj VARCHAR NOT NULL UNIQUE,
+        cnpj VARCHAR UNIQUE NOT NULL,
         nome VARCHAR NOT NULL,
-        email VARCHAR NOT NULL
-        )
-    `)
+        email VARCHAR UNIQUE NOT NULL
+    )
+`);
 
-function createFornecedorRepository(newFornecedor) {
-    return new Promise((res, rej) => {
-        const {nome, email, cnpj} = newFornecedor;
+function createFornecedorRepository(novoFornecedor) {
+    return new Promise((resolve, reject) => {
+
+        const {
+            cnpj,
+            nome,
+            email
+        } = novoFornecedor;
+
         db.run(
-            `
-            INSERT INTO fornecedor (cnpj, nome, email)
-            VALUES (?, ?, ?)
-            `, 
-            [cnpj, nome, email], 
-            function (err) {
-                if (err) {
-                    rej(err)
+            `INSERT INTO fornecedor (cnpj, nome, email)
+            VALUES(?,?,?)`,
+            [cnpj, nome, email],
+            function(error) {
+                if (error) {
+                    if (error.message && error.message.includes('UNIQUE constraint failed: fornecedor.email')) {
+                        reject(new Error('Email já cadastrado'));
+                    } else if (error.message && error.message.includes('UNIQUE constraint failed: fornecedor.cnpj')) {
+                        reject(new Error('CNPJ já cadastrado'));
+                    } else {
+                        reject(error);
+                    }
                 } else {
-                    res({id: this.lastID, ...newFornecedor})
-                }
-            }
-        )
-    })
-}
-
-function findByCnpjRepository(cnpj) {
-    return new Promise((res, rej) => {
-        db.get(
-            `
-            SELECT id, cnpj, nome, email
-            FROM fornecedor
-            WHERE cnpj = ?
-            `, [cnpj], (err, row) => {
-                if (err) {
-                    rej(err);
-                } else {
-                    res(row);
+                    resolve({
+                        id: this.lastID,
+                        ...novoFornecedor
+                    });
                 }
             }
         );
     });
 }
 
-function findByIdRepository(id) {
-    return new Promise((res, rej) => {
+function findFornecedorByIdRepository(id) {
+    return new Promise((resolve, reject) => {
         db.get(
-            `
-            SELECT id, cnpj, nome, email
+            `SELECT 
+                id, cnpj, nome, email
             FROM fornecedor
-            WHERE id = ?
-            `, 
-            [id], 
-            (err, row) => {
-                if (err) {
-                    rej(err);
+            WHERE id = ?`,
+            [id],
+            (error, row) => {
+                if(error) {
+                    reject(error);
                 } else {
-                    res(row);
+                    resolve(row);
                 }
             }
-        );
+        )        
     });
 }
 
 function findAllFornecedorRepository() {
-    return new Promise((res, rej) => {
-        db.all(`
-            SELECT id, cnpj, nome, email
-            FROM fornecedor
-            `, 
-            [], (err, rows) => {
-                if (err) {
-                    rej(err);
+    return new Promise((resolve, reject) => {
+        db.all(
+            `SELECT 
+                * 
+            FROM fornecedor`,
+            [],
+            (error, rows) => {  
+                if(error) {
+                    reject(error);
                 } else {
-                    res(rows);
+                    resolve(rows);  
+                }
+            }
+        )
+    });
+}
+
+function updateFornecedorRepository(id, fornecedor) {
+    return new Promise((resolve, reject) => {
+
+        const {
+            cnpj, 
+            nome, 
+            email
+        } = fornecedor;
+
+        db.run(
+            `UPDATE fornecedor SET 
+                cnpj = ?, 
+                nome = ?, 
+                email = ? 
+            WHERE id = ?`,
+            [cnpj, nome, email, id],  
+            (error) => {
+                if(error) {
+                    reject(error);
+                } else {
+                    resolve({
+                        id,
+                        ...fornecedor
+                    });
+                }
+            }
+        );
+    });
+}
+
+function deleteFornecedorRepository(id) {
+    return new Promise((resolve, reject) => {
+        db.run(
+            `DELETE FROM fornecedor
+            WHERE id = ?`,
+            [id],
+            (error) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve({
+                        message: "Fornecedor deletado com sucesso"
+                    });
                 }
             }
         );
@@ -86,7 +130,8 @@ function findAllFornecedorRepository() {
 
 export default {
     createFornecedorRepository,
-    findByCnpjRepository,
-    findByIdRepository,
-    findAllFornecedorRepository
-};
+    findFornecedorByIdRepository,
+    findAllFornecedorRepository,
+    updateFornecedorRepository,
+    deleteFornecedorRepository
+}
