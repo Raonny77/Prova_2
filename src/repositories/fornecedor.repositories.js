@@ -10,20 +10,21 @@ db.run(`
     `)
 
     function createFornecedorRepository(newFornecedor) {
-        return new Promise((resolve, reject) => {
-            const {username, email, cnpj} = newFornecedor;
-            db.run(`
+        return new Promise((res, rej) => {
+            const {nome, email, cnpj} = newFornecedor;
+            db.run(
+                `
                 INSERT INTO fornecedores (cnpj, nome, email)
                 VALUES (?, ?, ?)
-            `, [cnpj,nome,email], 
+
+            `, 
+            [cnpj,nome,email], 
             (err) =>{
                 if (err) {
-                    reject(err)
+                    rej(err)
                 } else {
-                    resolve({message: "Fornecedor cadastrado com sucesso!"})
+                    res({id: this.lastID, ...newFornecedor})
                 }
-            
-                
             })
         })
     }
